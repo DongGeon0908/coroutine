@@ -10,3 +10,46 @@
 
 ### 코틀린의 코루틴 사용 과정
 > 코틀린은 코루틴 빌더에 원하는 동작을 람다로 넘겨서 코루틴을 만들어 실행하는 방식으로 코루는을 활용
+
+### 간단 코루틴
+
+코틀린 기반의 코루틴(Coroutine)은 비동기 처리를 위한 라이브러리로, 동시성 프로그래밍을 보다 쉽고 직관적으로 구현할 수 있도록 돕는 기술입니다. 코루틴은 마치 함수 호출처럼 코드의 흐름을 제어하며, 일종의 경량 스레드(Lightweight Thread)로 작동합니다.
+
+코루틴은 일반적인 함수와는 달리 실행 중 중단하고 재개될 수 있으며, 이를 통해 비동기 처리를 보다 쉽게 구현할 수 있습니다. 코루틴은 보통 suspend 함수를 사용하며, 이 함수가 호출되면 해당 코루틴이 일시 중단됩니다. 이후 다른 코루틴이 실행될 때까지 대기하다가, 다시 재개되어 실행됩니다.
+
+코루틴은 크게 두 가지 개념인 'launch'와 'async-await'로 나뉩니다. launch는 일반적인 함수 호출과 유사한 방식으로 코루틴을 실행합니다. async-await는 비동기 처리 결과를 반환하는 함수를 호출할 때 사용되며, 결과를 기다리는 동안 다른 코루틴이 실행될 수 있도록 합니다.
+
+코루틴을 사용하기 위해서는 kotlinx.coroutines 라이브러리가 필요합니다. 이 라이브러리는 코틀린 표준 라이브러리의 일부로 포함되어 있으며, Gradle이나 Maven과 같은 의존성 관리 도구를 사용하여 추가할 수 있습니다.
+
+다음은 코루틴을 사용한 간단한 예제입니다.
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+    val job = launch {
+        delay(1000L)
+        println("World!")
+    }
+    print("Hello, ")
+    job.join()
+}
+```
+이 예제는 "Hello, World!"를 출력합니다. launch 함수를 사용하여 새로운 코루틴을 생성하고, delay 함수를 사용하여 1초간 대기한 후 "World!"를 출력합니다. 이후에는 "Hello, "를 출력한 후, job.join()을 호출하여 코루틴이 실행을 완료할 때까지 기다립니다.
+
+다음은 async-await를 사용한 예제입니다.
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+    val deferred = async {
+        delay(1000L)
+        "World!"
+    }
+    print("Hello, ")
+    val result = deferred.await()
+    println(result)
+}
+```
+이 예제는 "Hello, World!"를 출력합니다. async 함수를 사용하여 결과를 반환하는 코루틴을 생성하고, delay 함수를 사용하여 1초간 대기한 후 "World!"를 반환
