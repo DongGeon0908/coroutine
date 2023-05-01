@@ -53,3 +53,75 @@ fun main() = runBlocking {
 }
 ```
 이 예제는 "Hello, World!"를 출력합니다. async 함수를 사용하여 결과를 반환하는 코루틴을 생성하고, delay 함수를 사용하여 1초간 대기한 후 "World!"를 반환
+
+코루틴에서는 다양한 함수와 스코프가 제공되는데, 이를 적절하게 사용하면 보다 효율적인 비동기 처리를 할 수 있습니다.
+
+### coroutineScope
+coroutineScope는 일시 중단 가능한 함수 내에서 다른 코루틴을 실행하는 데 사용되는 스코프입니다. 일반적으로 runBlocking 함수 대신 사용됩니다. coroutineScope 내에서 실행된 코루틴이 완료될 때까지 해당 스코프에서 일시 중단됩니다.
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+    launch {
+        delay(200L)
+        println("Task from runBlocking")
+    }
+
+    coroutineScope {
+        launch {
+            delay(500L)
+            println("Task from nested launch")
+        }
+
+        delay(100L)
+        println("Task from coroutine scope") 
+    }
+
+    println("Coroutine scope is over") 
+}
+```
+이 예제에서는 runBlocking과 coroutineScope를 사용하여 각각 두 개의 코루틴을 실행합니다. 일반적으로 runBlocking은 실행된 코루틴이 완료될 때까지 대기하는 반면, coroutineScope는 실행된 코루틴이 완료될 때까지 해당 스코프에서 일시 중단됩니다.
+
+결과적으로 위 코드는 다음과 같이 출력됩니다.
+
+```
+sql
+Task from runBlocking
+Task from coroutine scope
+Task from nested launch
+Coroutine scope is over
+```
+
+### withContext
+withContext는 지정된 코루틴 디스패처에서 블록을 실행하도록 합니다. 디스패처는 코루틴이 실행되는 스레드 풀을 관리하며, 여러 개의 디스패처를 사용하여 다른 스레드에서 코루틴을 실행할 수 있습니다.
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlin.system.measureTimeMillis
+
+suspend fun calculate(value: Int): Int {
+    delay(1000)
+    return value + 10
+}
+
+fun main() = runBlocking {
+    val time = measureTimeMillis {
+        val result1 = withContext(Dispatchers.IO) { calculate(10) }
+        val result2 = withContext(Dispatchers.IO) { calculate(20) }
+        println("Result: ${result1 + result2}")
+    }
+    println("Time: $time ms")
+}
+```
+이 예제에서는 Dispatchers.IO를 사용하여 백그라운드 스레드에서 두 개의 코루틴을 실행합니다. calculate 함수는 1초간 대기한 후, 인수로 전달된 값에 10을 더한 결과를 반환합니다.
+
+결과적으로 위 코드는 다음과 같이 출력됩니다.
+
+```yaml
+Result: 40
+Time: 1033 ms
+```
+
+### runBlocking
+runBlocking은 코루틴이 모두 완료될 때까지 현재 스레드를 블록하는 함수입니다. 일반적으로 테스트 코드에서 사용
