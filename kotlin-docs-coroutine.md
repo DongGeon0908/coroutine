@@ -262,6 +262,7 @@ try-catch 블록을 사용하여 CancellationException 예외를 처리합니다
 코루틴을 시작하는 방법 중 하나는 코루틴 빌더(coroutine builder)를 사용하는 것입니다. 코루틴 빌더는 launch, async, runBlocking, withContext 등의 함수를 제공합니다.
 
 *launch*
+    
 launch 함수는 비동기 코루틴을 실행하고, Job 인스턴스를 반환합니다. launch 함수는 실행이 완료될 때까지 기다리지 않습니다.
 
 ```kotlin
@@ -276,6 +277,7 @@ fun main() = runBlocking {
 이 코드는 "Hello,"와 "World!"를 출력합니다. runBlocking 함수는 메인 스레드를 차단하며, launch 함수를 통해 생성된 코루틴은 지정된 시간만큼 지연되고 "World!"를 출력합니다.
 
 *async와 await*
+    
 async 함수는 비동기 코루틴을 실행하고, Deferred 인스턴스를 반환합니다. Deferred 인스턴스는 await 함수를 사용하여 비동기 작업의 결과를 반환합니다.
 
 ```kotlin
@@ -290,6 +292,7 @@ fun main() = runBlocking {
 이 코드는 "Hello, World!"를 출력합니다. async 함수를 사용하여 Deferred 인스턴스를 생성하고, await 함수를 사용하여 해당 작업이 완료될 때까지 기다립니다. await 함수는 결과 값을 반환합니다.
 
 *runBlocking*
+    
 runBlocking 함수는 지정된 블록을 실행하면서 메인 스레드를 차단합니다. runBlocking 함수는 코루틴 빌더 함수가 아닌 일반 함수에서 사용할 수 있습니다.
 
 ``` kotlin
@@ -302,6 +305,7 @@ fun main() = runBlocking {
 이 코드는 "Hello,"와 "World!"를 출력합니다. runBlocking 함수는 지정된 블록을 실행하면서 메인 스레드를 차단합니다. delay 함수는 비동기적으로 작동합니다.
 
 *withContext*
+    
 withContext 함수는 지정된 코루틴 컨텍스트에서 코드를 실행합니다.
 
 ```kotlin
