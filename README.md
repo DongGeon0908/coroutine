@@ -2,6 +2,20 @@
 > 컴퓨터 프로그램 구성 요소 중 하나로 비선점형 멀티태스킹(non-preemptive multasking)을 수행하는 일반화한 서브루틴(subroutine)이다.
 > 코루틴은 실행을 일시 중단(suspend)하고 재개(resume)할 수 있는 여러 진입 지점(entrypoint)을 허용한다.
 
+### Dispatcher
+
+- Thread에 코루틴을 보내는 역할을 수행
+- 스레드 풀을 생성하고, Dispatcher를 통해 코루틴을 스레드에 분배한다.
+- 코루틴을 사용하기 위해서는 스레드풀이 있어야 하고, 디스패처는 설정된 스레드풀에 코루틴을 배분하는 역할을 수행
+- 코루틴이 스레드에 직접 접근은 불가, 디스패처를 통해서 접근
+
+**Dispatcher의 종류**
+
+- Dispatcher.Main : 메인스레드 디스패처
+- Dispatcher.IO : file or network io 작업에 최적화된 디스패처
+- Dispatcher.Default : cpu io 작업에 최적화된 디스패처
+
+
 ### 서브루틴
 > 여러 명령어를 모아 이름을 부여해서 반복 호출할 수 있게 정의한 프로그램 구성 요소 == 함수
 
