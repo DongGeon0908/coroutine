@@ -14,6 +14,7 @@
 - Dispatcher.Main : 메인스레드 디스패처
 - Dispatcher.IO : file or network io 작업에 최적화된 디스패처
 - Dispatcher.Default : cpu io 작업에 최적화된 디스패처
+- Dispatcher.Unconfined : 코루틴이 호출된 스레드에서 진행되는 디스패처
 
 ```kotlin
 /*
