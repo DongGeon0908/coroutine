@@ -1,4 +1,11 @@
 # Coroutine
+
+### 코루틴 책 읽고 공부
+- [Concurrency란..](docs/concurrency_1.md)
+- 
+
+
+### Coroutine
 > 컴퓨터 프로그램 구성 요소 중 하나로 비선점형 멀티태스킹(non-preemptive multasking)을 수행하는 일반화한 서브루틴(subroutine)이다.
 > 코루틴은 실행을 일시 중단(suspend)하고 재개(resume)할 수 있는 여러 진입 지점(entrypoint)을 허용한다.
 
