@@ -6,6 +6,7 @@
 - [라이프 사이클과 에러 핸들링](docs/concurrency_3.md)
 - [일시 중단 함수와 코루틴 컨텍스트](docs/concurrency_4.md)
 - [이터레이터, 시퀀스 그리고 프로듀서](docs/concurrency_5.md)
+- [채널-통신을 통한 메모리 공유](docs/concurrency_6.md)
 
 
 ### Coroutine
