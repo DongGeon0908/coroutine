@@ -150,3 +150,7 @@ Time: 1033 ms
 
 ### runBlocking
 runBlocking은 코루틴이 모두 완료될 때까지 현재 스레드를 블록하는 함수입니다. 일반적으로 테스트 코드에서 사용
+
+### Reference
+
+- https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md
