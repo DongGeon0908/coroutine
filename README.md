@@ -28,6 +28,12 @@
 - Dispatcher.Default : cpu io 작업에 최적화된 디스패처
 - Dispatcher.Unconfined : 코루틴이 호출된 스레드에서 진행되는 디스패처
 
+```
+The CoroutineDispatcher that is designed for offloading blocking IO tasks to a shared pool of threads.
+
+Additional threads in this pool are created and are shutdown on demand. The number of threads used by tasks in this dispatcher is limited by the value of "kotlinx.coroutines.io.parallelism" (IO_PARALLELISM_PROPERTY_NAME) system property. It defaults to the limit of 64 threads or the number of cores (whichever is larger).
+```
+
 ### 서브루틴
 > 여러 명령어를 모아 이름을 부여해서 반복 호출할 수 있게 정의한 프로그램 구성 요소 == 함수
 
