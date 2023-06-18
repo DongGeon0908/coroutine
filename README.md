@@ -8,6 +8,7 @@
 - [이터레이터, 시퀀스 그리고 프로듀서](docs/concurrency_5.md)
 - [채널-통신을 통한 메모리 공유](docs/concurrency_6.md)
 - [스레드 한정, 액터 그리고 뮤텍스](docs/concurrency_7.md)
+- [동시성 코드이 테스트와 디버깅](docs/concurrency_8.md)
 
 
 ### Coroutine
