@@ -1,6 +1,10 @@
 package example
 
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -68,4 +72,37 @@ fun asyncJob() = runBlocking {
     val job = async { 3 + 5 }
 
     val result = job.await() // async의 결과를 가져옴
+}
+
+fun newCoroutineScope(): Unit = runBlocking {
+    val job = CoroutineScope(Dispatchers.Default).async {
+        throw IllegalStateException()
+    }
+
+    delay(1_000)
+
+    job.await()
+}
+
+
+fun newCoroutineScopeWithSupervisorJob(): Unit = runBlocking {
+    val job = CoroutineScope(SupervisorJob()).async {
+        throw IllegalStateException()
+    }
+
+    delay(1_000)
+
+    job.await()
+}
+
+fun coExceptionHandler(): Unit = runBlocking {
+    val exceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+        printlnWithThread("예외")
+    }
+
+    val job = CoroutineScope(Dispatchers.Default).launch(exceptionHandler) {
+        throw IllegalStateException()
+    }
+
+    delay(1000)
 }

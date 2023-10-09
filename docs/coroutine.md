@@ -87,3 +87,161 @@ VM OPTIONS
 
 - isActive : 현재 코루틴이 활성화 되어 있는지, 취소 신호를 받았는지
 - Dispatchers.Default : 우리의 코루틴을 다른 스레드에 배정
+
+### launch와 async의 예외 발생 차이
+
+- launch : 예외가 발생하면, 예외를 출력하고 코루틴 종료
+- async : 예외가 발생해도 예외를 출력하지 않으며, 확인할려면 await이 필요
+
+### 코루틴의 예외전파
+
+- 자식 코루틴의 예외는 부모 코루틴으로 전파되어진다.
+
+```kotlin
+/**
+ * Creates a _supervisor_ job object in an active state.
+ * Children of a supervisor job can fail independently of each other.
+ *
+ * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,
+ * so a supervisor can implement a custom policy for handling failures of its children:
+ *
+ * * A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the context.
+ * * A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting deferred value.
+ *
+ * If [parent] job is specified, then this supervisor job becomes a child job of its parent and is cancelled when its
+ * parent fails or is cancelled. All this supervisor's children are cancelled in this case, too. The invocation of
+ * [cancel][Job.cancel] with exception (other than [CancellationException]) on this supervisor job also cancels parent.
+ *
+ * @param parent an optional parent job.
+ */
+@Suppress("FunctionName")
+public fun SupervisorJob(parent: Job? = null): CompletableJob = SupervisorJobImpl(parent)
+```
+
+### CoroutineExceptionHandler
+
+- launch에만 적용 가능
+- 부모 코루틴 존재시 동작하지 않는다.
+- 발생한 예외가 CancellationException인 경우, 취소로 간주하고 부모 코루틴에게 전파하지 않는다.
+- 그 외 다른 예외가 발생한 경우, 실패로 간주하고 부모 코루틴에게 전파한다.
+
+```kotlin
+internal expect fun handleCoroutineExceptionImpl(context: CoroutineContext, exception: Throwable)
+
+/**
+ * Helper function for coroutine builder implementations to handle uncaught and unexpected exceptions in coroutines,
+ * that could not be otherwise handled in a normal way through structured concurrency, saving them to a future, and
+ * cannot be rethrown. This is a last resort handler to prevent lost exceptions.
+ *
+ * If there is [CoroutineExceptionHandler] in the context, then it is used. If it throws an exception during handling
+ * or is absent, all instances of [CoroutineExceptionHandler] found via [ServiceLoader] and
+ * [Thread.uncaughtExceptionHandler] are invoked.
+ */
+@InternalCoroutinesApi
+public fun handleCoroutineException(context: CoroutineContext, exception: Throwable) {
+    // Invoke an exception handler from the context if present
+    try {
+        context[CoroutineExceptionHandler]?.let {
+            it.handleException(context, exception)
+            return
+        }
+    } catch (t: Throwable) {
+        handleCoroutineExceptionImpl(context, handlerException(exception, t))
+        return
+    }
+    // If a handler is not present in the context or an exception was thrown, fallback to the global handler
+    handleCoroutineExceptionImpl(context, exception)
+}
+
+internal fun handlerException(originalException: Throwable, thrownException: Throwable): Throwable {
+    if (originalException === thrownException) return originalException
+    return RuntimeException("Exception while trying to handle coroutine exception", thrownException).apply {
+        addSuppressedThrowable(originalException)
+    }
+}
+
+/**
+ * Creates a [CoroutineExceptionHandler] instance.
+ * @param handler a function which handles exception thrown by a coroutine
+ */
+@Suppress("FunctionName")
+public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineContext, Throwable) -> Unit): CoroutineExceptionHandler =
+    object : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
+        override fun handleException(context: CoroutineContext, exception: Throwable) =
+            handler.invoke(context, exception)
+    }
+
+/**
+ * An optional element in the coroutine context to handle **uncaught** exceptions.
+ *
+ * Normally, uncaught exceptions can only result from _root_ coroutines created using the [launch][CoroutineScope.launch] builder.
+ * All _children_ coroutines (coroutines created in the context of another [Job]) delegate handling of their
+ * exceptions to their parent coroutine, which also delegates to the parent, and so on until the root,
+ * so the `CoroutineExceptionHandler` installed in their context is never used.
+ * Coroutines running with [SupervisorJob] do not propagate exceptions to their parent and are treated like root coroutines.
+ * A coroutine that was created using [async][CoroutineScope.async] always catches all its exceptions and represents them
+ * in the resulting [Deferred] object, so it cannot result in uncaught exceptions.
+ *
+ * ### Handling coroutine exceptions
+ *
+ * `CoroutineExceptionHandler` is a last-resort mechanism for global "catch all" behavior.
+ * You cannot recover from the exception in the `CoroutineExceptionHandler`. The coroutine had already completed
+ * with the corresponding exception when the handler is called. Normally, the handler is used to
+ * log the exception, show some kind of error message, terminate, and/or restart the application.
+ *
+ * If you need to handle exception in a specific part of the code, it is recommended to use `try`/`catch` around
+ * the corresponding code inside your coroutine. This way you can prevent completion of the coroutine
+ * with the exception (exception is now _caught_), retry the operation, and/or take other arbitrary actions:
+ *
+ * ```
+
+* scope.launch { // launch child coroutine in a scope
+*     try {
+*          // do something
+*     } catch (e: Throwable) {
+*          // handle exception
+*     }
+* }
+* ```
+*
+* ### Implementation details
+*
+* By default, when no handler is installed, uncaught exception are handled in the following way:
+*
+    * If exception is [CancellationException] then it is ignored
+* (because that is the supposed mechanism to cancel the running coroutine)
+*
+    * Otherwise:
+*     * if there is a [Job] in the context, then [Job.cancel] is invoked;
+*     * Otherwise, all instances of [CoroutineExceptionHandler] found via [ServiceLoader]
+*     * and current thread's [Thread.uncaughtExceptionHandler] are invoked.
+*
+* [CoroutineExceptionHandler] can be invoked from an arbitrary thread.
+  */ public interface CoroutineExceptionHandler : CoroutineContext.Element { /**
+    * Key for [CoroutineExceptionHandler] instance in the coroutine context.
+      */ public companion object Key : CoroutineContext.Key<CoroutineExceptionHandler>
+
+  /**
+    * Handles uncaught [exception] in the given [context]. It is invoked
+    * if coroutine has an uncaught exception.
+      */ public fun handleException(context: CoroutineContext, exception: Throwable)
+      }
+
+```
+```
+
+### Structured Concurrency
+
+- 부모 코루틴과 자식 코루틴은 항상 같이 다님
+- 수많은 코루틴이 유실되거나 누수되지 않도록 보장
+- 코루틴이 tree 구조로 구성되어 있음
+- 자식 코루틴에서 예외가 발생할 경우, Structured Concurrency에 의해 부모 코루틴이 취소되고, 부모 코루틴이 다른 자식 코루틴을 취소시킴
+- 부모 코루틴이 취소되면, 자식 코루틴도 취소됨
+- 코드 내의 에러가 유실되지 않고 적절히 보고될 수 있도록 보장
+- CancellationException은 정상적인 취소로 간주하며, 부모 코루틴에서 전파되지 않고, 다른 자식 코루틴도 취소시키지 않음
+
+```kotlin
+Coroutines follow a principle of structured concurrency which means that new coroutines can only be launched in a specific CoroutineScope which delimits the lifetime of the coroutine.The above example shows that runBlocking establishes the corresponding scope and that is why the previous example waits until World !is printed after a second's delay and only then exits.
+
+In a real application, you will be launching a lot of coroutines . Structured concurrency ensures that they are not lost and do not leak . An outer scope cannot complete until all its children coroutines complete . Structured concurrency also ensures that any errors in the code are properly reported and are never lost .
+```
