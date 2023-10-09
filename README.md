@@ -178,13 +178,6 @@ Time: 1033 ms
 
 runBlocking은 코루틴이 모두 완료될 때까지 현재 스레드를 블록하는 함수입니다. 일반적으로 테스트 코드에서 사용
 
-### Coroutine Start Options
-
-- DEFAULT : immediately schedules coroutine for execution according to its context;
-- LAZY : starts coroutine lazily, only when it is needed;
-- ATOMIC : atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
-- UNDISPATCHED : immediately executes coroutine until its first suspension point in the current thread.
-
 ### Reference
 
 - https://github.com/Kotlin/KEEP/blob/master/proposals/coroutines.md

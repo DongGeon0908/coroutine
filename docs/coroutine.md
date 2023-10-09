@@ -75,3 +75,15 @@ VM OPTIONS
 - 스레드의 context-switching의 경우 Heap 메모리는 공유하고, stack만 교체되므로 비용이 상대적으로 적음
 - 코루틴의 context-switching의 경우, 동일 스레드에서 코루틴이 실행되면 메모리 전부를 공유하므로, 스레드의 context-switching보다 비용이 적음
     - 하나의 스레드 안에서 동시성을 확보할 수 있다.
+
+### Coroutine Start Options
+
+- DEFAULT : immediately schedules coroutine for execution according to its context;
+- LAZY : starts coroutine lazily, only when it is needed;
+- ATOMIC : atomically (in a non-cancellable way) schedules coroutine for execution according to its context;
+- UNDISPATCHED : immediately executes coroutine until its first suspension point in the current thread.
+
+### Coroutine Cancel
+
+- isActive : 현재 코루틴이 활성화 되어 있는지, 취소 신호를 받았는지
+- Dispatchers.Default : 우리의 코루틴을 다른 스레드에 배정
