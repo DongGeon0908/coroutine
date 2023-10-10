@@ -228,7 +228,6 @@ public inline fun CoroutineExceptionHandler(crossinline handler: (CoroutineConte
       }
 
 ```
-```
 
 ### Structured Concurrency
 
@@ -245,3 +244,15 @@ Coroutines follow a principle of structured concurrency which means that new cor
 
 In a real application, you will be launching a lot of coroutines . Structured concurrency ensures that they are not lost and do not leak . An outer scope cannot complete until all its children coroutines complete . Structured concurrency also ensures that any errors in the code are properly reported and are never lost .
 ```
+
+### CoroutineScope and CoroutineContext
+
+- coroutine은 coroutineScope안에서 동작 (async, launch)
+- coroutineScope는 coroutineContext라는 데이터를 보관
+- coroutineScope는 코루틴이 탄생할 수 있는 영역
+- coroutineContext는 현재 코루틴의 이름, coroutineExceptionHandler, Job, CoroutineDispatchers 등의 정보들이 들어 있다.
+
+### DisPatcher
+
+- coroutine이 어떤 스레드에 배정될지를 관리
+
