@@ -251,8 +251,112 @@ In a real application, you will be launching a lot of coroutines . Structured co
 - coroutineScope는 coroutineContext라는 데이터를 보관
 - coroutineScope는 코루틴이 탄생할 수 있는 영역
 - coroutineContext는 현재 코루틴의 이름, coroutineExceptionHandler, Job, CoroutineDispatchers 등의 정보들이 들어 있다.
+- coroutineContext는 key, value 형태로 데이터를 저장
+
+```kotlin
+package kotlin.coroutines
+
+/**
+ * Persistent context for the coroutine. It is an indexed set of [Element] instances.
+ * An indexed set is a mix between a set and a map.
+ * Every element in this set has a unique [Key].
+ */
+@SinceKotlin("1.3")
+public interface CoroutineContext {
+    /**
+     * Returns the element with the given [key] from this context or `null`.
+     */
+    public operator fun <E : Element> get(key: Key<E>): E?
+
+    /**
+     * Accumulates entries of this context starting with [initial] value and applying [operation]
+     * from left to right to current accumulator value and each element of this context.
+     */
+    public fun <R> fold(initial: R, operation: (R, Element) -> R): R
+
+    /**
+     * Returns a context containing elements from this context and elements from  other [context].
+     * The elements from this context with the same key as in the other one are dropped.
+     */
+    public operator fun plus(context: CoroutineContext): CoroutineContext =
+        if (context === EmptyCoroutineContext) this else // fast path -- avoid lambda creation
+            context.fold(this) { acc, element ->
+                val removed = acc.minusKey(element.key)
+                if (removed === EmptyCoroutineContext) element else {
+                    // make sure interceptor is always last in the context (and thus is fast to get when present)
+                    val interceptor = removed[ContinuationInterceptor]
+                    if (interceptor == null) CombinedContext(removed, element) else {
+                        val left = removed.minusKey(ContinuationInterceptor)
+                        if (left === EmptyCoroutineContext) CombinedContext(element, interceptor) else
+                            CombinedContext(CombinedContext(left, element), interceptor)
+                    }
+                }
+            }
+
+    /**
+     * Returns a context containing elements from this context, but without an element with
+     * the specified [key].
+     */
+    public fun minusKey(key: Key<*>): CoroutineContext
+
+    /**
+     * Key for the elements of [CoroutineContext]. [E] is a type of element with this key.
+     */
+    public interface Key<E : Element>
+
+    /**
+     * An element of the [CoroutineContext]. An element of the coroutine context is a singleton context by itself.
+     */
+    public interface Element : CoroutineContext {
+        /**
+         * A key of this coroutine context element.
+         */
+        public val key: Key<*>
+
+        public override operator fun <E : Element> get(key: Key<E>): E? =
+            @Suppress("UNCHECKED_CAST")
+            if (this.key == key) this as E else null
+
+        public override fun <R> fold(initial: R, operation: (R, Element) -> R): R =
+            operation(initial, this)
+
+        public override fun minusKey(key: Key<*>): CoroutineContext =
+            if (this.key == key) EmptyCoroutineContext else this
+    }
+}
+```
 
 ### DisPatcher
 
 - coroutine이 어떤 스레드에 배정될지를 관리
+- ExecutorService.asCoroutineDispatcher() : ExecutorService를 디스패처로 전환 가능한 extensions
 
+### Suspend
+
+- 중지되었다가, 다시 재개될 수 있는 메서드
+```kotlin
+fun main(): Unit = runBlocking {
+  val result1 = apiCall1()
+  val result2 = apiCall2(result1)
+  printWithThread(result2)
+}
+suspend fun apiCall1(): Int {
+  return CoroutineScope(Dispatchers.Default).async {
+    Thread.sleep(1_000L)
+    100
+  }.await()
+}
+suspend fun apiCall2(num: Int): Int {
+  return CompletableFuture.supplyAsync {
+    Thread.sleep(1_000L)
+    100
+  }.await()
+}
+```
+
+### Suspend Function
+
+- coroutineScope : launch or async와 같은 새로운 코루틴을 만들지만, 주어진 함수 블록이 바로 실행됨, 새로 생긴 코루틴과 자식 코루틴들이 모두 완료된 이후, 반환. coroutineScope로 만든 코루틴은 이전 코루틴의 자식 코루틴이 된다.
+- withContext : 주어진 코드 블록이 즉시 호출되며 새로운 코루틴이 생성, 코루틴이 완전히 종료되어야 반환, 기본적으로 coroutineScope와 동일, 대신 다른점은 context에 변화를 줄 수 있음 ex) withContext(Dispatcher.IO){}
+- withTimeout : 주어진 함수 블록이 시간 내에 완료되어야 함, 완료되지 않으면 TimeoutCancellationException 발생
+- withTimeoutNull : 주어진 함수 블록이 시간 내에 완료되어야 함, 완료되지 않으면 null 반환
