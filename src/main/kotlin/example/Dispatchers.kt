@@ -4,7 +4,7 @@
 
 @file:Suppress("unused")
 
-package kotlinx.coroutines
+// package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.scheduling.*
